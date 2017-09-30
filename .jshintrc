@@ -1,0 +1,22 @@
+{
+  "esversion": 6,
+
+  "eqeqeq": true,
+  "freeze": true,
+  "indent": 2,
+  "noempty": true,
+  "nonbsp": true,
+  "undef": true,
+  "unused": true,
+  "varstmt": true,
+
+  // Environments
+  "browser": false,
+  "devel": true,
+  "mocha": true,
+  "node": true,
+
+  "globals": {
+    
+  }
+}

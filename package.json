@@ -1,0 +1,32 @@
+{
+  "name": "pug-client-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Borvik/pug-client-template.git"
+  },
+  "engines": {
+    "node": ">=4.8.0"
+  },
+  "author": "Chris Kolkman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Borvik/pug-client-template/issues"
+  },
+  "homepage": "https://github.com/Borvik/pug-client-template#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "express": "^4.15.2",
+    "jshint": "^2.9.4",
+    "mocha": "^3.2.0",
+    "pug": "^2.0.0-beta11"
+  }
+}
