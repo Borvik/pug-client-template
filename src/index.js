@@ -111,7 +111,8 @@ class PugClientTemplate {
       templateName + '=' + pug.compileClient(templateText, {
         compileDebug: false,
         inlineRuntimeFunctions: false,
-        name: templateName
+        name: templateName,
+        filename: parser.filename
       });
     
     return {
