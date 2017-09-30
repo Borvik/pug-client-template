@@ -1,6 +1,5 @@
 const pug = require('pug');
-const buildRuntime = require('pug-runtime/build');
-let pug_walk = require('pug-walk');
+const pugRuntimeSources = require('pug-runtime/lib/sources');
 
 class PugClientTemplate {
 
@@ -27,7 +26,8 @@ class PugClientTemplate {
       lex: { include: self.handleLexClientTemplate },
       parse: {
         expressionTokens: {
-          "pugtemplate": self.parseClientTemplate
+          "pugtemplate": self.parseClientTemplate,
+          "pugruntime": self.parsePugRuntime
         }
       }
     });
@@ -42,6 +42,45 @@ class PugClientTemplate {
       lexer.callLexerFunction('pipelessText');
       return true;
     }
+
+    token = lexer.scan(/^pugruntime(?=\(| |$|\n)/, 'pugruntime');
+    if (token) lexer.tokens.push(token);
+  }
+
+  parsePugRuntime(parser) {
+    let tok = parser.expect('pugruntime');
+    
+    let runtime = '(function(){window.pug={};';
+    let propNames = Object.getOwnPropertyNames(pugRuntimeSources);
+    propNames.sort().forEach(name => {
+      if (name === 'rethrow') return;
+      runtime += pugRuntimeSources[name];
+      runtime += 'window.pug.' + name + '=' + 'pug_' + name + ';';
+    });
+    runtime += '})();';
+    
+    return {
+      type: 'Tag',
+      name: 'script',
+      selfClosing: false,
+      block: {
+        type: 'Block',
+        nodes: [{
+          type: 'Text',
+          val: runtime,
+          line: tok.line,
+          column: tok.col,
+          filename: parser.filename
+        }],
+        line: tok.line,
+        filename: parser.filename
+      },
+      attrs: [],
+      attributeBlocks: [],
+      isInline: false,
+      line: tok.line,
+      filename: parser.filename
+    };
   }
 
   parseClientTemplate(parser) {
@@ -75,51 +114,22 @@ class PugClientTemplate {
         name: templateName
       });
     
-    let pugRuntime = '';
-    if (!this.pugRuntimeOutput) {
-      let pugFunctions = [
-        "has_own_property",
-        "merge",
-        "classes_array",
-        "classes_object",
-        "classes",
-        "style",
-        "attr",
-        "attrs",
-        "match_html",
-        "escape",
-        "rethrow"
-      ];
-
-      pugRuntime = '(function() {';
-      pugRuntime += buildRuntime(pugFunctions);
-      pugRuntime += 'window.pug={};';
-      pugFunctions.forEach(fn => {
-        pugRuntime += 'window.pug.' + fn + '=' + 'pug_' + fn + ';';
-      });
-      pugRuntime +='})();';
-      this.pugRuntimeOutput = true;
-    }
-    block = {
-      type: 'Block',
-      nodes: [
-        {
-          type: 'Text',
-          val: pugRuntime + templateFunction,
-          line: tok.line,
-          column: tok.col,
-          filename: parser.filename
-        }
-      ],
-      line: tok.line,
-      filename: parser.filename
-    };
-    
     return {
       type: 'Tag',
       name: 'script',
       selfClosing: false,
-      block,
+      block: {
+        type: 'Block',
+        nodes: [{
+          type: 'Text',
+          val: templateFunction,
+          line: tok.line,
+          column: tok.col,
+          filename: parser.filename
+        }],
+        line: tok.line,
+        filename: parser.filename
+      },
       attrs: [],
       attributeBlocks: [],
       isInline: false,
