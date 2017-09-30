@@ -1,13 +1,13 @@
 {
   "name": "pug-client-template",
   "version": "1.0.0",
-  "description": "",
+  "description": "Enables creating client template functions from within the main pug template",
   "main": "src/index.js",
   "files": [
     "src"
   ],
   "scripts": {
-    "test": "mocha"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -16,17 +16,23 @@
   "engines": {
     "node": ">=4.8.0"
   },
+  "keywords": [
+    "pug",
+    "client",
+    "template",
+    "templates"
+  ],
   "author": "Chris Kolkman",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Borvik/pug-client-template/issues"
   },
   "homepage": "https://github.com/Borvik/pug-client-template#readme",
-  "dependencies": {},
+  "dependencies": {
+    "pug": "^2.0.0-beta11"
+  },
   "devDependencies": {
     "express": "^4.15.2",
-    "jshint": "^2.9.4",
-    "mocha": "^3.2.0",
-    "pug": "^2.0.0-beta11"
+    "jshint": "^2.9.4"
   }
 }
