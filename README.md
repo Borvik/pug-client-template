@@ -11,6 +11,12 @@ The `pugtemplate` tag has some special attributes.
 * `name` - Required. This will be the name of the function that can be called by the client-side javascript.
 * `obj` - Optional. This is the name of the template object that will hold the functions.  If not specified, "templates" will be used.
 
+# Installation
+
+```
+npm install pug-client-template
+```
+
 # Example
 ```pug
 body
