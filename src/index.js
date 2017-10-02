@@ -26,11 +26,38 @@ class PugClientTemplate {
       lex: { include: self.handleLexClientTemplate },
       parse: {
         expressionTokens: {
-          "pugtemplate": self.parseClientTemplate,
-          "pugruntime": self.parsePugRuntime
+          "pugtemplate": function(parser) { return self.parseClientTemplate(parser); },
+          "pugruntime": function(parser) { return self.parsePugRuntime(parser); }
         }
       }
     });
+
+    let pug_compile = pug.compile;
+    self.compile_level = 0;
+    pug.compile = function(str, options) {
+      if (!self.compile_level) self.compileOptions = options || {};
+      self.compile_level++;
+
+      let result = pug_compile.call(pug, str, options);
+
+      self.compile_level--;
+      if (!self.compile_level) self.compileOptions = null;
+
+      return result;
+    };
+
+    let pug_compileClientWithDependenciesTracked = pug.compileClientWithDependenciesTracked;
+    pug.compileClientWithDependenciesTracked = function(str, options) {
+      if (!self.compile_level) self.compileOptions = options || {};
+      self.compile_level++;
+
+      let result = pug_compileClientWithDependenciesTracked(str, options);
+
+      self.compile_level--;
+      if (!self.compile_level) self.compileOptions = null;
+
+      return result;
+    };
   }
 
   handleLexClientTemplate(lexer) {
@@ -112,7 +139,14 @@ class PugClientTemplate {
         compileDebug: false,
         inlineRuntimeFunctions: false,
         name: templateName,
-        filename: parser.filename
+        filename: parser.filename,
+        pretty: this.compileOptions.pretty,
+        globals: this.compileOptions.globals,
+        self: this.compileOptions.self,
+        filters: this.compileOptions.filters,
+        filterOptions: this.compileOptions.filterOptions,
+        filterAliases: this.compileOptions.filterAliases,
+        plugins: this.compileOptions.plugins
       });
     
     return {
