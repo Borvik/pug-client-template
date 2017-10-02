@@ -1,3 +1,5 @@
+'use strict';
+
 let app = require('./server');
 
 app.listen(3000, function() {

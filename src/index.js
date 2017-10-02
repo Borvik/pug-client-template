@@ -1,3 +1,5 @@
+'use strict';
+
 const pug = require('pug');
 const pugRuntimeSources = require('pug-runtime/lib/sources');
 
