@@ -1,6 +1,6 @@
 {
   "name": "pug-client-template",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Enables creating client template functions from within the main pug template",
   "main": "src/index.js",
   "files": [
