@@ -2,11 +2,13 @@
 
 const pug = require('pug');
 const pugRuntimeSources = require('pug-runtime/lib/sources');
+const runtimeWrap = require('pug-runtime/wrap');
 
 class PugClientTemplate {
 
   static init() {
     let self = new PugClientTemplate();
+    self.tmpl = {};
     return (req, res, next) => {
       self.register(res);
       next();
@@ -122,6 +124,7 @@ class PugClientTemplate {
 
     let nameAttr = attrs.find(attr => attr.name === 'name');
     let objAttr = attrs.find(attr => attr.name === 'obj');
+    let dataAttr = attrs.find(attr => attr.name === 'data');
     if (!nameAttr) {
       parser.error('INVALID_TOKEN', 'Missing "name" attribute on pugtemplate', tok);
     }
@@ -132,24 +135,47 @@ class PugClientTemplate {
     let objectName = objAttr.val.substring(1, objAttr.val.length - 1);
     let templateName = nameAttr.val.substring(1, nameAttr.val.length - 1);
 
+    if (templateName && dataAttr) {
+      if (!this.tmpl[templateName])
+        parser.error('INVALID_TOKEN', 'PugTemplate "' + templateName + '" has not been defined', tok);
+        
+      let tmplResult = this.tmpl[templateName](this.compileOptions[dataAttr.val]);
+      return {
+        type: 'Block',
+        nodes: [{
+          type: 'Text',
+          val: tmplResult,
+          line: tok.line,
+          column: tok.col,
+          filename: parser.filename
+        }],
+        line: tok.line,
+        filename: parser.filename
+      };
+    }
+
     block = parser.parseTextBlock() || parser.emptyBlock(tok.line);
     let templateText = block.nodes.map(function(node) { return node.val; }).join('');
     
+    let fnBody = pug.compileClient(templateText, {
+      compileDebug: false,
+      inlineRuntimeFunctions: false,
+      name: templateName,
+      filename: parser.filename,
+      pretty: this.compileOptions.pretty,
+      globals: this.compileOptions.globals,
+      self: this.compileOptions.self,
+      filters: this.compileOptions.filters,
+      filterOptions: this.compileOptions.filterOptions,
+      filterAliases: this.compileOptions.filterAliases,
+      plugins: this.compileOptions.plugins
+    });
+
+    this.tmpl[templateName] = runtimeWrap(fnBody, templateName);
+
     let templateFunction = 'if(!window.' + objectName + '){window.' + objectName + '={};}' +
       'window.' + objectName + '.' + 
-      templateName + '=' + pug.compileClient(templateText, {
-        compileDebug: false,
-        inlineRuntimeFunctions: false,
-        name: templateName,
-        filename: parser.filename,
-        pretty: this.compileOptions.pretty,
-        globals: this.compileOptions.globals,
-        self: this.compileOptions.self,
-        filters: this.compileOptions.filters,
-        filterOptions: this.compileOptions.filterOptions,
-        filterAliases: this.compileOptions.filterAliases,
-        plugins: this.compileOptions.plugins
-      });
+      templateName + '=' + fnBody;
     
     return {
       type: 'Tag',

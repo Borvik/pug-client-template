@@ -10,6 +10,7 @@ The `pugtemplate` tag has some special attributes.
 
 * `name` - Required. This will be the name of the function that can be called by the client-side javascript.
 * `obj` - Optional. This is the name of the template object that will hold the functions.  If not specified, "templates" will be used.
+* `data` - Optional. The data to pass to the template for immediate output.
 
 # Installation
 
@@ -23,6 +24,7 @@ body
   #templateResult
   pugtemplate(name='my_template',obj='tmpls')
     .my-template #{testVar}
+  pugtemplate(name='my_template',data=varPassedIn)
   pugruntime
   script.
     $(function() {
@@ -33,6 +35,7 @@ Abbreviated output
 ```html
 <body>
   <div id="templateResult"></div>
+  <div class="my-template">{value of varPassedIn.testVar}</div>
   <script>
     if (!window.tmpls) {
       window.tmpls = {};
