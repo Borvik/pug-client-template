@@ -1,6 +1,6 @@
 {
   "name": "pug-client-template",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Enables creating client template functions from within the main pug template",
   "main": "src/index.js",
   "files": [
@@ -30,6 +30,7 @@
   "homepage": "https://github.com/Borvik/pug-client-template#readme",
   "dependencies": {
     "pug": "^2.0.0-beta11",
+    "pug-code-gen": "^2.0.0",
     "pug-runtime": "^2.0.3"
   },
   "devDependencies": {

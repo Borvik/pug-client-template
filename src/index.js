@@ -2,7 +2,7 @@
 
 const pug = require('pug');
 const pugRuntimeSources = require('pug-runtime/lib/sources');
-const runtimeWrap = require('pug-runtime/wrap');
+const codeGen = require('pug-code-gen');
 
 class PugClientTemplate {
 
@@ -139,12 +139,13 @@ class PugClientTemplate {
       if (!this.tmpl[templateName])
         parser.error('INVALID_TOKEN', 'PugTemplate "' + templateName + '" has not been defined', tok);
         
-      let tmplResult = this.tmpl[templateName](this.compileOptions[dataAttr.val]);
       return {
         type: 'Block',
         nodes: [{
           type: 'Text',
-          val: tmplResult,
+          pugtemplate: templateName,
+          func: this.tmpl[templateName],
+          data: dataAttr.val,
           line: tok.line,
           column: tok.col,
           filename: parser.filename
@@ -171,7 +172,7 @@ class PugClientTemplate {
       plugins: this.compileOptions.plugins
     });
 
-    this.tmpl[templateName] = runtimeWrap(fnBody, templateName);
+    this.tmpl[templateName] = fnBody;
 
     let templateFunction = 'if(!window.' + objectName + '){window.' + objectName + '={};}' +
       'window.' + objectName + '.' + 
@@ -201,5 +202,15 @@ class PugClientTemplate {
     };
   }
 }
+
+let origVisitText = codeGen.CodeGenerator.prototype.visitText;
+codeGen.CodeGenerator.prototype.visitText = function(node) {
+  if (!node.pugtemplate) {
+    origVisitText.call(this, node);
+    return;
+  }
+  let exp = '(function(argData) {' + node.func + ';return ' + node.pugtemplate + '(argData);})' + '(' + node.data + ')';
+  this.bufferExpression(exp);
+};
 
 module.exports = PugClientTemplate.init();
