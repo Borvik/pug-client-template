@@ -4,11 +4,16 @@ const pug = require('pug');
 const pugRuntimeSources = require('pug-runtime/lib/sources');
 const codeGen = require('pug-code-gen');
 
+// stores template functions for the current run
+let templateCache = {},
+    compileOptions = null,
+    compile_level = 0,
+    outputServerHelpers = true;
+
 class PugClientTemplate {
 
   static init() {
     let self = new PugClientTemplate();
-    self.tmpl = {};
     return (req, res, next) => {
       self.register(res);
       next();
@@ -33,35 +38,11 @@ class PugClientTemplate {
           "pugtemplate": function(parser) { return self.parseClientTemplate(parser); },
           "pugruntime": function(parser) { return self.parsePugRuntime(parser); }
         }
+      },
+      postCodeGen: function(js) {
+        return js;
       }
     });
-
-    let pug_compile = pug.compile;
-    self.compile_level = 0;
-    pug.compile = function(str, options) {
-      if (!self.compile_level) self.compileOptions = options || {};
-      self.compile_level++;
-
-      let result = pug_compile.call(pug, str, options);
-
-      self.compile_level--;
-      if (!self.compile_level) self.compileOptions = null;
-
-      return result;
-    };
-
-    let pug_compileClientWithDependenciesTracked = pug.compileClientWithDependenciesTracked;
-    pug.compileClientWithDependenciesTracked = function(str, options) {
-      if (!self.compile_level) self.compileOptions = options || {};
-      self.compile_level++;
-
-      let result = pug_compileClientWithDependenciesTracked(str, options);
-
-      self.compile_level--;
-      if (!self.compile_level) self.compileOptions = null;
-
-      return result;
-    };
   }
 
   handleLexClientTemplate(lexer) {
@@ -88,6 +69,19 @@ class PugClientTemplate {
       runtime += pugRuntimeSources[name];
       runtime += 'window.pug.' + name + '=' + 'pug_' + name + ';';
     });
+
+    //output all template functions
+    let objectsOutput = [];
+    for (let fnName in templateCache) {
+      if (!templateCache.hasOwnProperty(fnName)) continue;
+      let fn = templateCache[fnName];
+      if (objectsOutput.indexOf(fn.obj) < 0) {
+        objectsOutput.push(fn.obj);
+        runtime += 'window.' + fn.obj + '={};';
+      }
+      runtime += 'window.' + fn.obj + '.' + fnName + '=' + fn.fn + ';';
+    }
+
     runtime += '})();';
     
     return {
@@ -136,23 +130,22 @@ class PugClientTemplate {
     let templateName = nameAttr.val.substring(1, nameAttr.val.length - 1);
 
     if (templateName && dataAttr) {
-      if (!this.tmpl[templateName])
+      if (!templateCache.hasOwnProperty(templateName))
         parser.error('INVALID_TOKEN', 'PugTemplate "' + templateName + '" has not been defined', tok);
         
       return {
-        type: 'Block',
-        nodes: [{
-          type: 'Text',
-          pugtemplate: templateName,
-          func: this.tmpl[templateName],
-          data: dataAttr.val,
-          line: tok.line,
-          column: tok.col,
-          filename: parser.filename
-        }],
+        type: 'Text',
+        pugtemplate: true,
+        func: templateName,
+        data: dataAttr.val,
         line: tok.line,
+        column: tok.col,
         filename: parser.filename
       };
+    }
+
+    if (templateCache.hasOwnProperty(templateName)) {
+      parser.error('INVALID_TOKEN', 'PugTemplate "' + templateName + '" has already been defined', tok);
     }
 
     block = parser.parseTextBlock() || parser.emptyBlock(tok.line);
@@ -163,53 +156,130 @@ class PugClientTemplate {
       inlineRuntimeFunctions: false,
       name: templateName,
       filename: parser.filename,
-      pretty: this.compileOptions.pretty,
-      globals: this.compileOptions.globals,
-      self: this.compileOptions.self,
-      filters: this.compileOptions.filters,
-      filterOptions: this.compileOptions.filterOptions,
-      filterAliases: this.compileOptions.filterAliases,
-      plugins: this.compileOptions.plugins
+      pretty: compileOptions.pretty,
+      globals: compileOptions.globals,
+      self: compileOptions.self,
+      filters: compileOptions.filters,
+      filterOptions: compileOptions.filterOptions,
+      filterAliases: compileOptions.filterAliases,
+      plugins: compileOptions.plugins
     });
 
-    this.tmpl[templateName] = fnBody;
-
-    let templateFunction = 'if(!window.' + objectName + '){window.' + objectName + '={};}' +
-      'window.' + objectName + '.' + 
-      templateName + '=' + fnBody;
+    templateCache[templateName] = {fn: fnBody, obj: objectName, server: false};
     
     return {
-      type: 'Tag',
-      name: 'script',
-      selfClosing: false,
-      block: {
-        type: 'Block',
-        nodes: [{
-          type: 'Text',
-          val: templateFunction,
-          line: tok.line,
-          column: tok.col,
-          filename: parser.filename
-        }],
-        line: tok.line,
-        filename: parser.filename
-      },
-      attrs: [],
-      attributeBlocks: [],
-      isInline: false,
+      type: 'Text',
+      pugtemplate: false,
       line: tok.line,
+      column: tok.col,
       filename: parser.filename
     };
+    // return {
+    //   type: 'Tag',
+    //   name: 'script',
+    //   selfClosing: false,
+    //   block: {
+    //     type: 'Block',
+    //     nodes: [{
+    //       type: 'Text',
+    //       val: templateFunction,
+    //       line: tok.line,
+    //       column: tok.col,
+    //       filename: parser.filename
+    //     }],
+    //     line: tok.line,
+    //     filename: parser.filename
+    //   },
+    //   attrs: [],
+    //   attributeBlocks: [],
+    //   isInline: false,
+    //   line: tok.line,
+    //   filename: parser.filename
+    // };
   }
 }
 
+let pug_compile = pug.compile;
+pug.compile = function(str, options) {
+  if (!compile_level) compileOptions = options || {};
+  compile_level++;
+
+  let err = null, result = null;
+
+  try {
+    result = pug_compile.call(pug, str, options);
+  } catch(error) {
+    err = error;
+  }
+
+  compile_level--;
+  if (!compile_level) {
+    compileOptions = null;
+    templateCache = {};
+  }
+
+  if (err) throw err;
+  return result;
+};
+
+let pug_compileClientWithDependenciesTracked = pug.compileClientWithDependenciesTracked;
+pug.compileClientWithDependenciesTracked = function(str, options) {
+  if (!compile_level) compileOptions = options || {};
+  compile_level++;
+
+  let err = null, result = null;
+
+  try {
+    result = pug_compileClientWithDependenciesTracked(str, options);
+  } catch (error) {
+    err = error;
+  }
+
+  compile_level--;
+  if (!compile_level) {
+    compileOptions = null;
+    templateCache = {};
+  }
+
+  if (err) throw err;
+  return result;
+};
+
+
+let origVisit = codeGen.CodeGenerator.prototype.visit;
+codeGen.CodeGenerator.prototype.visit = function(node, parent) {
+  if (node && node.type && node.type !== 'Block' && compile_level === 1 && outputServerHelpers) {
+    console.log('VISIT ON SERVER');
+    outputServerHelpers = false;
+    
+    let js = ';var pug_pct_tmpl={}';
+    for (let fnName in templateCache) {
+      if (!templateCache.hasOwnProperty(fnName)) continue;
+      js += ';pug_pct_tmpl.' + fnName + '=' + templateCache[fnName].fn;
+      templateCache[fnName].server = true;
+    }
+    if (js !== ';var pug_pct_tmpl={}')
+      this.buf.push(js + ';');
+  }
+  origVisit.call(this, node, parent);
+};
+
 let origVisitText = codeGen.CodeGenerator.prototype.visitText;
 codeGen.CodeGenerator.prototype.visitText = function(node) {
-  if (!node.pugtemplate) {
+  if (!node.hasOwnProperty('pugtemplate')) {
     origVisitText.call(this, node);
     return;
   }
-  let exp = '(function(argData) {' + node.func + ';return ' + node.pugtemplate + '(argData);})' + '(' + node.data + ')';
+  if (node.pugtemplate === false) return;
+
+  let func = templateCache[node.func];
+  if (!func.server) {
+    // generate function
+  }
+  console.log(node.func + ' generated for SERVER');
+  //let exp = '(function(argData) {' + func.fn + ';return ' + node.func + '(argData);})' + '(' + node.data + ')';
+  //let exp = 'pug.pct_tmpl.' + node.func + '(' + node.data + ')';
+  let exp = '(function(argData){return pug_pct_tmpl.'+node.func+'(argData);})(' + node.data + ')';
   this.bufferExpression(exp);
 };
 
