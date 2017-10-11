@@ -12,7 +12,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(require('../src')); //include our middleware
 
 app.get('/', function(req, res) {
-  res.render('default', {objTest: {testVar: 'tester'}});
+  //res.render('default', {objTest: {testVar: 'tester'}});
+  res.render('newsyntax', {objTest: {testVar: 'tester'}});
 });
 
 module.exports = app;
