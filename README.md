@@ -6,11 +6,18 @@ This enables two new tags for pug files `pugruntime` and `pugtemplate`.
 * `pugruntime` - Outputs the pug runtime functions to the object `window.pug` (created by the tag).
 * `pugtemplate` - Outputs the block below it as a template function usable by client-side javascript.
 
-The `pugtemplate` tag has some special attributes.
+The `pugtemplate` works just like `mixins`, and in fact compile to a mixin as well as the client side, so can be called just like a mixin would.
 
-* `name` - Required. This will be the name of the function that can be called by the client-side javascript.
-* `obj` - Optional. This is the name of the template object that will hold the functions.  If not specified, "templates" will be used.
-* `data` - Optional. The data to pass to the template for immediate output.
+```
+pugtemplate templateName(arg1, arg2, ...restArgs)
+```
+
+The template name may be namespaced using dot notation.  This allows you to specify which window variable will get the template function.  If you do not specify a namespace, the default `templates` will be used.  The name for the mixin will use the name with the dot replaced with an underscore.
+
+```
+pugtemplate tmpl.templateName(arg1)
++tmpl_templateName('arg')
+```
 
 # Installation
 
@@ -22,27 +29,29 @@ npm install pug-client-template
 ```pug
 body
   #templateResult
-  pugtemplate(name='my_template',obj='tmpls')
+  pugtemplate tmpls.my_template(testVar)
     .my-template #{testVar}
-  pugtemplate(name='my_template',data=varPassedIn)
+  +tmpls_my_template(varPassedIn)
   pugruntime
   script.
     $(function() {
-      $('#templateResult').html(tmpls.my_template({testVar: 'Working'}));
+      $('#templateResult').html(tmpls.my_template('Working'));
     });
 ```
 Abbreviated output
 ```html
 <body>
   <div id="templateResult"></div>
-  <div class="my-template">{value of varPassedIn.testVar}</div>
+  <div class="my-template">{value of varPassedIn}</div>
   <script>
-    if (!window.tmpls) {
-      window.tmpls = {};
-    }
-    window.tmpls.my_template = function my_template(locals) {
-      /* this is the compiled template function */
-    }
+    (function() {
+      if (!window.tmpls) {
+        window.tmpls = {};
+      }
+      window.tmpls.my_template = function my_template(arg1) {
+        /* this is the compiled template function */
+      };
+    })();
   </script>
   <script>
     (function() {
@@ -53,7 +62,7 @@ Abbreviated output
   </script>
   <script>
     $(function() {
-      $('#templateResult').html(tmpls.my_template({testVar: 'Working'}));
+      $('#templateResult').html(tmpls.my_template('Working'));
     });
   </script>
 </body>

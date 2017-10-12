@@ -30,9 +30,7 @@
   },
   "homepage": "https://github.com/Borvik/pug-client-template#readme",
   "dependencies": {
-    "pug": "^2.0.0-beta11",
-    "pug-code-gen": "^2.0.0",
-    "pug-runtime": "^2.0.3"
+    "pug": "^2.0.0-beta11"
   },
   "devDependencies": {
     "express": "^4.15.2",
