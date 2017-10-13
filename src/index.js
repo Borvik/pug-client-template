@@ -170,7 +170,10 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
   this.buffer('var pug_html = "", pug_interp;');
   let bufferLength = this.buf.length;
   this.parentIndents++;
+  let origDebug = this.debug;
+  this.debug = true;
   this.visit(block, mixin);
+  this.debug = origDebug;
   this.parentIndents--;
   let realBuffer = [];
   while(this.buf.length > bufferLength) {
