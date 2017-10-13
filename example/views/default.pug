@@ -5,26 +5,25 @@ html
   body
     #otherResult(data-test=objTest)
     #templateResult
-    pugtemplate like.Mixin(user)
-      .main test
-    pugtemplate(name='quickTmp')
+    pugtemplate quickTmp(testVar)
       .does
         .this
           .work OK - #{testVar}
           include included
-    pugtemplate(name='template2')
-      .second done
+    pugtemplate tmpl.template2(one, ...two)
+      .second Done #{one} OK #{JSON.stringify(two)}
     #result2
     #finalResult
-    pugtemplate(name='quickTmp',data=objTest)
-    pugtemplate(name='quickTmp',data={testVar: 'inline'})
+    +quickTmp(objTest.testVar)
+    +quickTmp('inline')
     - var codeObj = {testVar: 'fromCode'}
-    pugtemplate(name='quickTmp',data=codeObj)
+    +quickTmp(codeObj.testVar)
+    +tmpl_template2('ok', '1', '2')
     pugruntime
     script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js')
     script.
       $(function() {
         $('#otherResult').text('jQuery is running');
-        $('#templateResult').html(templates.quickTmp({testVar: 'Working'}));
-        $('#result2').html(templates.template2());
+        $('#templateResult').html(templates.quickTmp('Working'));
+        $('#result2').html(tmpl.template2('ok2', 3, 4));
       });
