@@ -44,8 +44,8 @@ class PugClientTemplate {
       return true; 
     }
 
-    let captures;
-    if (captures = /^pugtemplate +([-\w]+\.?[-\w]+)(?: *\((.*)\))? */.exec(lexer.input)) {
+    let captures = /^pugtemplate +([-\w]+\.?[-\w]+)(?: *\((.*)\))? */.exec(lexer.input);
+    if (captures) {
       lexer.consume(captures[0].length);
       let tok = lexer.tok('pugtemplate', captures[1]);
       tok.args = captures[2] || null;
@@ -54,9 +54,9 @@ class PugClientTemplate {
     }
   }
 
-  preLoad(ast, options) {
+  preLoad(ast) {
     ast = JSON.parse(JSON.stringify(ast));
-    return pug_walk(ast, function before(node, replace) {
+    return pug_walk(ast, function before(node) {
       if (node.type === 'PugTemplate') {
         node.type = 'Mixin';
         node.pugtemplate = true;

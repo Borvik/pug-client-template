@@ -21,6 +21,8 @@ pugtemplate tmpl.templateName(arg1)
 
 # Installation
 
+This might work on earlier version of NodeJS, however the NPM version of >=3.0.0 should be followed (as most new installations today have that by default it shouldn't be to hard).  NPM 3.0 started flattening dependencies, which this relies on - as the only listed dependency is Pug - though it still uses some of the dependencies of Pug.
+
 ```
 npm install pug-client-template
 ```
