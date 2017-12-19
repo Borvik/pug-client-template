@@ -142,10 +142,6 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
     templateName = names[1];
   }
 
-  if (!this.pug_template_objects) {
-    this.pug_template_objects = [];
-  }
-  
   let args = mixin.args || '';
   let block = mixin.block;
 
@@ -156,10 +152,7 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
   }
 
   this.buffer('<script>(function(){');
-  if (this.pug_template_objects.indexOf(objectName) < 0) {
-    this.pug_template_objects.push(objectName);
-    this.buffer('if(!window.' + objectName + '){window.' + objectName + '={};}');
-  }
+  this.buffer('if(!window.' + objectName + '){window.' + objectName + '={};}');
   this.buffer('window.' + objectName + '.' + templateName + ' = pug_interp = function(' + args.join(',') + '){');
   if (rest) {
     this.buffer('var ' + rest + ' = [];');
