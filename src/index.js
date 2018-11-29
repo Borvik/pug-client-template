@@ -4,6 +4,8 @@ const pugRuntimeSources = require('pug-runtime/lib/sources');
 const codeGen = require('pug-code-gen');
 const pug_walk = require('pug-walk');
 
+let warnedNamespaceDeprecation = false;
+
 class PugClientTemplate {
 
   static init() {
@@ -44,8 +46,15 @@ class PugClientTemplate {
       return true; 
     }
 
+    let cp = /^pugtemplate +([-\w]+)(?: *\((.*)\))? */.exec(lexer.input);
     let captures = /^pugtemplate +([-\w]+\.?[-\w]+)(?: *\((.*)\))? */.exec(lexer.input);
     if (captures) {
+      if (!warnedNamespaceDeprecation && captures[1].indexOf('.') >= 0) {
+        warnedNamespaceDeprecation = true;
+        console.warn(
+          `${lexer.filename}, line ${lexer.lineno}:${lexer.colno} - PugTemplate namespaces are deprecated and will be removed in a future version.`
+        );
+      }
       lexer.consume(captures[0].length);
       let tok = lexer.tok('pugtemplate', captures[1]);
       tok.args = captures[2] || null;

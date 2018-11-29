@@ -12,6 +12,8 @@ html
           include included
     pugtemplate tmpl.template2(one, ...two)
       .second Done #{one} OK #{JSON.stringify(two)}
+    pugtemplate tmpl.template3(one, ...two)
+      .third Third
     #result2
     #finalResult
     +quickTmp(objTest.testVar)
@@ -19,6 +21,7 @@ html
     - var codeObj = {testVar: 'fromCode'}
     +quickTmp(codeObj.testVar)
     +tmpl_template2('ok', '1', '2')
+    +tmpl_template3('ok', '1', '2')
     pugruntime
     script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js')
     script.
