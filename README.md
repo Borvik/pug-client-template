@@ -12,7 +12,7 @@ The `pugtemplate` works just like `mixins`, and in fact compile to a mixin as we
 pugtemplate templateName(arg1, arg2, ...restArgs)
 ```
 
-<h3 style="color: red">DEPRECATION NOTICE - namespaces will be deprecated in a future version.</h3>
+### DEPRECATION NOTICE - namespaces will be deprecated in a future version.
 
 The template name may be namespaced using dot notation.  This allows you to specify which window variable will get the template function.  If you do not specify a namespace, the default `templates` will be used.  The name for the mixin will use the name with the dot replaced with an underscore.
 
