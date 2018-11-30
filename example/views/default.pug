@@ -5,11 +5,14 @@ html
   body
     #otherResult(data-test=objTest)
     #templateResult
+    pugtemplate from_within(ok)
+      .within RECURSE: #{ok}
     pugtemplate quickTmp(testVar)
       .does
         .this
           .work OK - #{testVar}
           include included
+          +from_within(testVar)
     pugtemplate tmpl.template2(one, ...two)
       .second Done #{one} OK #{JSON.stringify(two)}
     pugtemplate tmpl.template3(one, ...two)
@@ -26,6 +29,7 @@ html
     script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js')
     script.
       $(function() {
+        debugger;
         $('#otherResult').text('jQuery is running');
         $('#templateResult').html(templates.quickTmp('Working'));
         $('#result2').html(tmpl.template2('ok2', 3, 4));

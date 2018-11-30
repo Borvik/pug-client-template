@@ -162,14 +162,16 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
 
   this.buffer('<script>(function(){');
   this.buffer('if(!window.' + objectName + '){window.' + objectName + '={};}');
-  this.buffer('window.' + objectName + '.' + templateName + ' = pug_interp = function(' + args.join(',') + '){');
+  this.buffer('if(!window.pug_mixins){window.pug_mixins={};window.pug_mixin_level=0;window.pug_html="";}');
+  // this.buffer('window.' + objectName + '.' + templateName + ' = window.pug_mixins = pug_interp = function(' + args.join(',') + '){');
+  this.buffer(`window.${objectName}.${templateName} = window.pug_mixins.${mixin.name} = pug_interp = function(${args.join(',')}){`);
   if (rest) {
     this.buffer('var ' + rest + ' = [];');
     this.buffer('for (pug_interp = ' + args.length + '; pug_interp < arguments.length; pug_interp++) {');
     this.buffer('  ' + rest + '.push(arguments[pug_interp]);');
     this.buffer('}');
   }
-  this.buffer('var pug_html = "", pug_interp;');
+  this.buffer('var pug_interp;window.pug_mixin_level++;');
   let bufferLength = this.buf.length;
   this.parentIndents++;
   let origDebug = this.debug;
@@ -187,7 +189,9 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
       continue;
     this.buffer(line);
   }
-  this.buffer('return pug_html;};');
+  this.buffer('window.pug_mixin_level--;');
+  this.buffer('if(window.pug_mixin_level < 1){var to_return=pug_html;pug_html="";return to_return;}')
+  this.buffer('};');
   this.buffer('})();</script>');
 };
 
