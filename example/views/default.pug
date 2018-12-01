@@ -7,6 +7,12 @@ html
     #templateResult
     pugtemplate from_within(ok)
       .within RECURSE: #{ok}
+      if ok === 'Working'
+        div &nbsp;&nbsp;At least it looks like it
+      else if ok === 'tester'
+        div &nbsp;&nbsp;Sure yea, there are those
+      else if ok === 'inline'
+        div &nbsp;&nbsp;Only true statement today
     pugtemplate quickTmp(testVar)
       .does
         .this
@@ -29,7 +35,6 @@ html
     script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js')
     script.
       $(function() {
-        debugger;
         $('#otherResult').text('jQuery is running');
         $('#templateResult').html(templates.quickTmp('Working'));
         $('#result2').html(tmpl.template2('ok2', 3, 4));

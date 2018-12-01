@@ -188,6 +188,7 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
     if (line.substr(0, 17) === ';pug_debug_line =')
       continue;
     this.buffer(line);
+    this.buffer("\n");
   }
   this.buffer('window.pug_mixin_level--;');
   this.buffer('if(window.pug_mixin_level < 1){var to_return=pug_html;pug_html="";return to_return;}')
