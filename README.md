@@ -33,13 +33,13 @@ npm install pug-client-template
 ```pug
 body
   #templateResult
-  pugtemplate tmpls.my_template(testVar)
+  pugtemplate my_template(testVar)
     .my-template #{testVar}
-  +tmpls_my_template(varPassedIn)
+  +my_template(varPassedIn)
   pugruntime
   script.
     $(function() {
-      $('#templateResult').html(tmpls.my_template('Working'));
+      $('#templateResult').html(templates.my_template('Working'));
     });
 ```
 Abbreviated output
@@ -49,10 +49,15 @@ Abbreviated output
   <div class="my-template">{value of varPassedIn}</div>
   <script>
     (function() {
-      if (!window.tmpls) {
-        window.tmpls = {};
+      if (!window.templates) {
+        window.templates = {};
       }
-      window.tmpls.my_template = function my_template(arg1) {
+      if (!window.pug_mixins) {
+        window.pug_mixins = {};
+        window.pug_mixin_level = 0;
+        window.pug_html = "";
+      }
+      window.templates.my_template = function my_template(arg1) {
         /* this is the compiled template function */
       };
     })();
@@ -66,7 +71,7 @@ Abbreviated output
   </script>
   <script>
     $(function() {
-      $('#templateResult').html(tmpls.my_template('Working'));
+      $('#templateResult').html(templates.my_template('Working'));
     });
   </script>
 </body>
