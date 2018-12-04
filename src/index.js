@@ -172,6 +172,7 @@ codeGen.CodeGenerator.prototype.visitMixin = function(mixin) {
     this.buffer('}');
   }
   this.buffer('var pug_interp;window.pug_mixin_level++;');
+  this.buffer('var attributes = this.attributes || {}; var block = this.block || false;');
   let bufferLength = this.buf.length;
   this.parentIndents++;
   let origDebug = this.debug;
